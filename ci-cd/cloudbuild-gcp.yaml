@@ -1,0 +1,41 @@
+steps:
+  # Terraform
+  - name: 'hashicorp/terraform:1.9.5'
+    args:
+      - 'init'
+      - '-backend-config=environments/$ENVIRONMENT/backend.tf'
+    dir: 'infra'
+    
+  - name: 'hashicorp/terraform:1.9.5'
+    args:
+      - 'plan'
+      - '-var-file=environments/$ENVIRONMENT/terraform.tfvars'
+    dir: 'infra'
+    env:
+      - 'TF_VAR_project_id=$PROJECT_ID'
+      
+  - name: 'hashicorp/terraform:1.9.5'
+    args:
+      - 'apply'
+      - '-auto-approve'
+      - '-var-file=environments/$ENVIRONMENT/terraform.tfvars'
+    dir: 'infra'
+    env:
+      - 'TF_VAR_project_id=$PROJECT_ID'
+
+  # Build Beam templates
+  - name: 'python:3.11'
+    entrypoint: './ci-cd/scripts/build-template.sh'
+    args:
+      - 'pipelines/pos-batch'
+      - 'pos_batch_template'
+      - '$PROJECT_ID'
+      - 'us-east1'
+      
+  - name: 'python:3.11'
+    entrypoint: './ci-cd/scripts/build-template.sh'
+    args:
+      - 'pipelines/web-streaming'
+      - 'web_streaming_template'
+      - '$PROJECT_ID'
+      - 'us-east1'

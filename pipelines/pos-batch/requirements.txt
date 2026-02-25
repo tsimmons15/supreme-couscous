@@ -1,0 +1,4 @@
+apache-beam[gcp]==2.59.0
+apache-beam[interactive]
+google-cloud-pubsub
+google-cloud-bigquery
