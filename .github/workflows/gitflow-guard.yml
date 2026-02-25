@@ -1,4 +1,4 @@
-name: GitFlow Guard  # Keep this exact name for ruleset matching
+name: gitflow  # Keep this exact name for ruleset matching
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
     types: [opened, synchronize, reopened]  # Explicit types help reliability
 
 jobs:
-  validate-gitflow:
+  validate:
     runs-on: ubuntu-latest
     # Critical: Set exact check name matching your ruleset expectation
     outputs:
