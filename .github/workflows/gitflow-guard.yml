@@ -1,30 +1,31 @@
-name: gitflow  # ← Generates "gitflow / validate"
-on:
-  pull_request:
-    branches: ['dev/*', 'release/*', 'main']
-    types: [opened, synchronize, reopened]
+name: Validate PR Source
+on: [pull_request]
 jobs:
-  validate:  # ← Job name creates "gitflow / validate"
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - name: GitFlow Validation
-        uses: actions/checkout@v4
+      - uses: actions/github-script@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-        run: |
-          SOURCE="${{ github.head_ref }}"
-          TARGET="${{ github.base_ref }}"
-          echo "::notice::PR: $SOURCE → $TARGET"
-          if [[ "$TARGET" =~ ^dev/ ]]; then
-            echo "::notice::✅ dev/* merge OK"
-            exit 0
-          elif [[ "$TARGET" =~ ^release/ && "$SOURCE" =~ ^dev/ ]]; then
-            echo "::notice::✅ release/* from dev/* OK"
-            exit 0
-          elif [[ "$TARGET" == "main" && "$SOURCE" =~ ^release/ ]]; then
-            echo "::notice::✅ main from release/* OK"
-            exit 0
-          else
-            echo "::error::❌ INVALID: $SOURCE → $TARGET"
-            exit 1
-          fi
+          script: |
+            const source = context.payload.pull_request.head.ref;
+            const target = context.payload.pull_request.base.ref;
+            if (target === 'release' && !source.startsWith('dev/')) {
+              github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                event: 'REQUEST_CHANGES',
+                body: 'Only dev/ branches can merge to release.'
+              });
+              process.exit(1);
+            }
+            if (target === 'main' && !source.startsWith('release/')) {
+              github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                event: 'REQUEST_CHANGES',
+                body: 'Only release/ branches can merge to main.'
+              });
+              process.exit(1);
+            }
