@@ -1,0 +1,50 @@
+name: GitFlow Guard
+
+on:
+  pull_request:
+    branches: ['dev/**', 'release/**', 'main']
+
+jobs:
+  validate-gitflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate source branch and naming
+        run: |
+          SOURCE_BRANCH="${{ github.head_ref || github.ref_name }}"
+          TARGET_BRANCH="${{ github.base_ref || github.ref_name }}"
+          
+          echo "Validating PR: $SOURCE_BRANCH -> $TARGET_BRANCH"
+          
+          # Check merges to dev/*: allow any source, but suggest personal branch pattern
+          if [[ "$TARGET_BRANCH" =~ ^dev/ ]]; then
+            if [[ ! "$SOURCE_BRANCH" =~ ^[a-zA-Z0-9_-]+/ ]]; then
+              echo "WARN: Source branch '$SOURCE_BRANCH' should ideally start with username/ (e.g., john/feature-123)"
+            fi
+            exit 0
+          fi
+          
+          # Check merges to release/*: must be from dev/*
+          if [[ "$TARGET_BRANCH" =~ ^release/ ]]; then
+            if [[ ! "$SOURCE_BRANCH" =~ ^dev/ ]]; then
+              echo "ERROR: Merges to release/* must come from dev/* branches only. Got: $SOURCE_BRANCH"
+              exit 1
+            fi
+          fi
+          
+          # Check merges to main: must be from release/*
+          if [[ "$TARGET_BRANCH" == "main" ]]; then
+            if [[ ! "$SOURCE_BRANCH" =~ ^release/ ]]; then
+              echo "ERROR: Merges to main must come from release/* branches only. Got: $SOURCE_BRANCH"
+              exit 1
+            fi
+          fi
+
+          # Personal branches: any name starting with username/ or similar (no strict enforcement, just warning)
+          echo "Personal branches unrestricted."
+          
+          echo "GitFlow validation passed."
