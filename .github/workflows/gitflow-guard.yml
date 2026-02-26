@@ -1,35 +1,46 @@
-name: Validate PR Source
-on: [pull_request]
+name: GitFlow Guard
+on:
+  pull_request:
+    branches: ['dev/**', 'release/**', 'main']
+    types: [opened, synchronize, reopened]
+
 jobs:
   validate:
     runs-on: ubuntu-latest
-    # Critical: Set exact check name matching your ruleset expectation
-    outputs:
-      result: ${{ steps.validate.outputs.result }}
-    
     steps:
-      - uses: actions/github-script@v7
+      - name: Validate PR source branch
+        uses: actions/github-script@v8
         with:
           script: |
             const source = context.payload.pull_request.head.ref;
             const target = context.payload.pull_request.base.ref;
-            if (target === 'release' && !source.startsWith('dev/')) {
-              github.rest.pulls.createReview({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.payload.pull_request.number,
-                event: 'REQUEST_CHANGES',
-                body: 'Only dev/ branches can merge to release.'
-              });
-              process.exit(1);
+            
+            console.log(`Validating PR: ${source} → ${target}`);
+            
+            // dev/*: allow any source (unrestricted per your spec)
+            if (target.startsWith('dev/')) {
+              console.log('dev/* target: Any source allowed');
+              return;
             }
-            if (target === 'main' && !source.startsWith('release/')) {
-              github.rest.pulls.createReview({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.payload.pull_request.number,
-                event: 'REQUEST_CHANGES',
-                body: 'Only release/ branches can merge to main.'
-              });
-              process.exit(1);
+            
+            // release/*: require dev/* source only
+            if (target.startsWith('release/')) {
+              if (!source.startsWith('dev/')) {
+                core.setFailed(`release/* requires dev/* source. Got: ${source}`);
+              } else {
+                console.log('release/* from dev/*: Valid');
+              }
+              return;
             }
+            
+            // main: require release/* source only
+            if (target === 'main') {
+              if (!source.startsWith('release/')) {
+                core.setFailed(`main requires release/* source. Got: ${source}`);
+              } else {
+                console.log('main from release/*: Valid');
+              }
+              return;
+            }
+            
+            console.log('Unguarded target branch');
