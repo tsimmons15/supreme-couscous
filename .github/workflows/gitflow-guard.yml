@@ -26,7 +26,7 @@ jobs:
             // release/*: require dev/* source only
             if (target.startsWith('release/')) {
               if (!source.startsWith('dev/')) {
-                core.setFailed('release/* requires dev/* source. Got: ${source}`);
+                core.setFailed(`release/* requires dev/* source. Got: ${source}`);
               } else {
                 console.log('release/* from dev/*: Valid');
               }
@@ -36,7 +36,7 @@ jobs:
             // main: require release/* source only
             if (target === 'main') {
               if (!source.startsWith('release/')) {
-                core.setFailed('main requires release/* source. Got: ${source}`);
+                core.setFailed(`main requires release/* source. Got: ${source}`);
               } else {
                 console.log('main from release/*: Valid');
               }
