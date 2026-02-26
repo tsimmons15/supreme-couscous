@@ -1,10 +1,5 @@
-name: gitflow  # Keep this exact name for ruleset matching
-
-on:
-  pull_request:
-    branches: ['dev/**', 'release/**', 'main']
-    types: [opened, synchronize, reopened]  # Explicit types help reliability
-
+name: Validate PR Source
+on: [pull_request]
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -13,53 +8,28 @@ jobs:
       result: ${{ steps.validate.outputs.result }}
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/github-script@v7
         with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}  # Use PR head for accuracy
-
-      - name: Validate GitFlow rules
-        id: validate
-        run: |
-          SOURCE_BRANCH="${{ github.head_ref }}"
-          TARGET_BRANCH="${{ github.base_ref }}"
-          
-          echo "Validating PR: $SOURCE_BRANCH -> $TARGET_BRANCH"
-          
-          # dev/*: allow any source (with naming warning)
-          if [[ "$TARGET_BRANCH" =~ ^dev/ ]]; then
-            if [[ ! "$SOURCE_BRANCH" =~ ^[a-zA-Z0-9_-]+/ ]]; then
-              echo "WARN: Source should start with username/ (non-blocking)"
-            fi
-            echo "result=success" >> $GITHUB_OUTPUT
-            echo "✅ dev/* merge validated"
-            exit 0
-          fi
-          
-          # release/*: require dev/* source
-          if [[ "$TARGET_BRANCH" =~ ^release/ ]]; then
-            if [[ ! "$SOURCE_BRANCH" =~ ^dev/ ]]; then
-              echo "❌ ERROR: release/* requires dev/* source. Got: $SOURCE_BRANCH"
-              echo "result=failure" >> $GITHUB_OUTPUT
-              exit 1
-            fi
-            echo "result=success" >> $GITHUB_OUTPUT
-            echo "✅ release/* from dev/* validated"
-          fi
-          
-          # main: require release/* source
-          if [[ "$TARGET_BRANCH" == "main" ]]; then
-            if [[ ! "$SOURCE_BRANCH" =~ ^release/ ]]; then
-              echo "❌ ERROR: main requires release/* source. Got: $SOURCE_BRANCH"
-              echo "result=failure" >> $GITHUB_OUTPUT
-              exit 1
-            fi
-            echo "result=success" >> $GITHUB_OUTPUT
-            echo "✅ main from release/* validated"
-          fi
-          
-      - name: Set status summary
-        if: always()
-        run: |
-          echo "Validation complete: ${{ steps.validate.outputs.result }}"
+          script: |
+            const source = context.payload.pull_request.head.ref;
+            const target = context.payload.pull_request.base.ref;
+            if (target === 'release' && !source.startsWith('dev/')) {
+              github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                event: 'REQUEST_CHANGES',
+                body: 'Only dev/ branches can merge to release.'
+              });
+              process.exit(1);
+            }
+            if (target === 'main' && !source.startsWith('release/')) {
+              github.rest.pulls.createReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                event: 'REQUEST_CHANGES',
+                body: 'Only release/ branches can merge to main.'
+              });
+              process.exit(1);
+            }
