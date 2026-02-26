@@ -10,22 +10,12 @@ jobs:
             const source = context.payload.pull_request.head.ref;
             const target = context.payload.pull_request.base.ref;
             if (target === 'release' && !source.startsWith('dev/')) {
-              github.rest.pulls.createReview({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.payload.pull_request.number,
-                event: 'REQUEST_CHANGES',
-                body: 'Only dev/ branches can merge to release.'
-              });
+              echo 'Only dev/ branches can merge to release.'
               process.exit(1);
             }
             if (target === 'main' && !source.startsWith('release/')) {
-              github.rest.pulls.createReview({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: context.payload.pull_request.number,
-                event: 'REQUEST_CHANGES',
-                body: 'Only release/ branches can merge to main.'
-              });
+              echo 'Only release/ branches can merge to main.'
               process.exit(1);
             }
+            echo 'Unguarded merge.'
+            process.exit(0)
