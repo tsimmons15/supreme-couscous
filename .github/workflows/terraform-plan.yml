@@ -14,7 +14,7 @@ jobs:
     - uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: '1.9.5'
-        
+
     - uses: ./.github/actions/gcp-auth
       with:
         credentials_json: '${{ secrets.GCP_SA_KEY }}'
@@ -22,7 +22,7 @@ jobs:
     - name: Terraform Plan DEV
       working-directory: ./infra
       env:
-        TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID_DEV }}
+        TF_VAR_project: ${{ secrets.GCP_PROJECT_ID_DEV }}
         TF_VAR_env: dev
       run: |
         terraform init -backend-config=../environments/dev/backend.tf
