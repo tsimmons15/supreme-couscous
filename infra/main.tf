@@ -96,4 +96,14 @@ resource "google_bigquery_table" "web_events_fact" {
   clustering = ["session_id", "user_id"]
 }
 
+resource "google_project_service" "apis" {
+  project = var.project_id
+  for_each = toset([
+    "composer.googleapis.com",
+    "dataflow.googleapis.com",
+    "storage.googleapis.com",
+  ])
+  service = each.value
+}
+
 # Enable required APIs
