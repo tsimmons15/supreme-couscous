@@ -15,7 +15,7 @@ resource "google_project_iam_member" "dataflow_sa_roles" {
     "roles/pubsub.subscriber",
     "roles/logging.logWriter"
   ])
-  project = var.project_id
+  project = var.project
   role    = each.key
   member  = "serviceAccount:${google_service_account.dataflow_sa.email}"
 }
@@ -23,14 +23,15 @@ resource "google_project_iam_member" "dataflow_sa_roles" {
 # POS Batch Dataflow Job
 resource "google_dataflow_job" "pos_batch" {
   name                    = "aeo-pos-batch-${var.env}"
-  template_gcs_path       = "gs://${var.project_id}-templates-${var.env}/pos_batch_template"
-  project_id              = var.project_id
+  template_gcs_path       = "gs://aeo-tf-state-${var.env}/templates/pos_batch_template"
+  temp_gcs_location       = "gs://aeo-tf-state-${var.env}/dataflow-temp/"
+  project_id              = var.project
   region                  = var.region
   zone                    = "${var.region}-a"
   
   parameters = {
     input  = "gs://${google_storage_bucket.raw_data.name}/*.csv"
-    output = "${var.project_id}:${google_bigquery_dataset.curated.dataset_id}.pos_sales_fact"
+    output = "${var.project}:${google_bigquery_dataset.curated.dataset_id}.pos_sales_fact"
   }
 
   service_account_email = google_service_account.dataflow_sa.email
@@ -45,13 +46,14 @@ resource "google_dataflow_job" "pos_batch" {
 # Web Streaming Dataflow Job
 resource "google_dataflow_job" "web_streaming" {
   name                    = "aeo-web-streaming-${var.env}"
-  template_gcs_path       = "gs://${var.project_id}-templates-${var.env}/web_streaming_template"
-  project_id              = var.project_id
+  template_gcs_path       = "gs://aeo-tf-state-${var.env}/templates/web_streaming_template"
+  temp_gcs_location       = "gs://aeo-tf-state-${var.env}/dataflow-temp/"
+  project_id              = var.project
   region                  = var.region
   
   parameters = {
-    input_topic  = "projects/${var.project_id}/topics/${google_pubsub_topic.web_events.name}"
-    output_table = "${var.project_id}:${google_bigquery_dataset.curated.dataset_id}.web_events_fact"
+    input_topic  = "projects/${var.project}/topics/${google_pubsub_topic.web_events.name}"
+    output_table = "${var.project}:${google_bigquery_dataset.curated.dataset_id}.web_events_fact"
   }
 
   service_account_email = google_service_account.dataflow_sa.email

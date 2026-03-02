@@ -9,7 +9,7 @@ terraform {
 }
 
 provider "google" {
-  project = var.project_id
+  project = var.project
   region  = var.region
   zone    = "${var.region}-a"
 }
@@ -29,7 +29,7 @@ resource "google_compute_subnetwork" "aeo_subnet" {
 
 # Cloud Storage Buckets
 resource "google_storage_bucket" "raw_data" {
-  name                        = "${var.project_id}-aeo-raw-data-${var.env}"
+  name                        = "${var.project}-aeo-raw-data-${var.env}"
   location                    = var.region
   force_destroy               = var.env != "prod"
   uniform_bucket_level_access = true
@@ -45,7 +45,7 @@ resource "google_storage_bucket" "raw_data" {
 }
 
 resource "google_storage_bucket" "templates" {
-  name                        = "${var.project_id}-templates-${var.env}"
+  name                        = "${var.project}-templates-${var.env}"
   location                    = var.region
   force_destroy               = true
   uniform_bucket_level_access = true
@@ -97,7 +97,7 @@ resource "google_bigquery_table" "web_events_fact" {
 }
 
 resource "google_project_service" "apis" {
-  project = var.project_id
+  project = var.project
   for_each = toset([
     "composer.googleapis.com",
     "dataflow.googleapis.com",
