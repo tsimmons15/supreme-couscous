@@ -5,6 +5,10 @@ on:
     branches: [ dev/** ]
   workflow_dispatch:
 
+concurrency:
+  group: terraform-dev
+  cancel-in-progress: true
+
 jobs:
   terraform-plan:
     runs-on: ubuntu-latest

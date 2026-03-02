@@ -7,8 +7,13 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+concurrency:
+  group: terraform-dev
+  cancel-in-progress: true
+
 jobs:
   terraform-plan:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -30,6 +35,7 @@ jobs:
         terraform plan -var-file="../environments/dev/terraform.tfvars"
 
   terraform-apply:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     needs: terraform-plan
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
