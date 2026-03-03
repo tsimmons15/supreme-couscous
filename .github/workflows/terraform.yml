@@ -28,7 +28,7 @@ jobs:
     - name: Terraform Plan DEV
       working-directory: ./infra
       env:
-        TF_VAR_project: ${{ secrets.GCP_PROJECT_ID_DEV }}
+        TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID_DEV }}
         TF_VAR_env: dev
       run: |
         terraform init -backend-config=../environments/dev/backend.tf
@@ -53,7 +53,7 @@ jobs:
     - name: Terraform Apply DEV
       working-directory: ./infra
       env:
-        TF_VAR_project: ${{ secrets.GCP_PROJECT_ID_DEV }}
+        TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID_DEV }}
         TF_VAR_env: dev
       run: |
         terraform init -backend-config=../environments/dev/backend.tf

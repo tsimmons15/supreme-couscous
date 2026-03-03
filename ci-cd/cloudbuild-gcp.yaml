@@ -12,7 +12,7 @@ steps:
       - '-var-file=environments/$ENVIRONMENT/terraform.tfvars'
     dir: 'infra'
     env:
-      - 'TF_VAR_project=$PROJECT_ID'
+      - 'TF_VAR_project_id=$PROJECT_ID'
       
   - name: 'hashicorp/terraform:1.9.5'
     args:
@@ -21,7 +21,7 @@ steps:
       - '-var-file=environments/$ENVIRONMENT/terraform.tfvars'
     dir: 'infra'
     env:
-      - 'TF_VAR_project=$PROJECT_ID'
+      - 'TF_VAR_project_id=$PROJECT_ID'
 
   # Build Beam templates
   - name: 'python:3.11'

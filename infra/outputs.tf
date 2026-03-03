@@ -1,5 +1,5 @@
 output "project_id" {
-  value = var.project
+  value = var.project_id
 }
 
 output "raw_bucket_name" {

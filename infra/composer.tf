@@ -39,7 +39,7 @@ resource "google_composer_environment" "aeo_composer" {
 
 # Composer DAGs Bucket
 resource "google_storage_bucket" "composer_dags" {
-  name     = "${var.project}-aeo-composer-${var.env}"
+  name     = "${var.project_id}-aeo-composer-${var.env}"
   location = var.region
   force_destroy = var.env != "prod"
 }
