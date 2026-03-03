@@ -7,8 +7,13 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+concurrency:
+  group: terraform-dev
+  cancel-in-progress: true
+
 jobs:
   terraform-plan:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -16,6 +21,9 @@ jobs:
     - uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: '1.9.5'
+    - uses: ./.github/actions/gcp-auth
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
     - name: Terraform Plan DEV
       working-directory: ./infra
@@ -26,16 +34,8 @@ jobs:
         terraform init -backend-config=../environments/dev/backend.tf
         terraform plan -var-file="../environments/dev/terraform.tfvars"
 
-    - name: Terraform Plan STAGING
-      working-directory: ./infra
-      env:
-        TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID_STAGING }}
-        TF_VAR_env: staging
-      run: |
-        terraform init -backend-config=../environments/staging/backend.tf
-        terraform plan -var-file="../environments/staging/terraform.tfvars"
-
   terraform-apply:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     needs: terraform-plan
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -46,6 +46,9 @@ jobs:
     - uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: '1.9.5'
+    - uses: ./.github/actions/gcp-auth
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
     - name: Terraform Apply DEV
       working-directory: ./infra
@@ -63,12 +66,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: google-github-actions/auth@v3
+    - uses: ./.github/actions/gcp-auth
       with:
         credentials_json: '${{ secrets.GCP_SA_KEY }}'
-    - uses: google-github-actions/setup-gcloud@v2
-      with:
-        project_id: ${{ secrets.GCP_PROJECT_ID }}
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'

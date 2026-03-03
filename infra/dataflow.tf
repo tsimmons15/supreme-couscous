@@ -15,7 +15,7 @@ resource "google_project_iam_member" "dataflow_sa_roles" {
     "roles/pubsub.subscriber",
     "roles/logging.logWriter"
   ])
-  project = var.project_id
+  project_id = var.project_id
   role    = each.key
   member  = "serviceAccount:${google_service_account.dataflow_sa.email}"
 }
@@ -23,8 +23,9 @@ resource "google_project_iam_member" "dataflow_sa_roles" {
 # POS Batch Dataflow Job
 resource "google_dataflow_job" "pos_batch" {
   name                    = "aeo-pos-batch-${var.env}"
-  template_gcs_path       = "gs://${var.project_id}-templates-${var.env}/pos_batch_template"
-  project_id              = var.project_id
+  template_gcs_path       = "gs://aeo-tf-state-${var.env}/templates/pos_batch_template"
+  temp_gcs_location       = "gs://aeo-tf-state-${var.env}/dataflow-temp/"
+  project              = var.project_id
   region                  = var.region
   zone                    = "${var.region}-a"
   
@@ -45,8 +46,9 @@ resource "google_dataflow_job" "pos_batch" {
 # Web Streaming Dataflow Job
 resource "google_dataflow_job" "web_streaming" {
   name                    = "aeo-web-streaming-${var.env}"
-  template_gcs_path       = "gs://${var.project_id}-templates-${var.env}/web_streaming_template"
-  project_id              = var.project_id
+  template_gcs_path       = "gs://aeo-tf-state-${var.env}/templates/web_streaming_template"
+  temp_gcs_location       = "gs://aeo-tf-state-${var.env}/dataflow-temp/"
+  project              = var.project_id
   region                  = var.region
   
   parameters = {
